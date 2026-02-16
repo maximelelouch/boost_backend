@@ -465,21 +465,24 @@ class MediaUploadView(viewsets.ViewSet):
         if not file_obj:
             return Response({'error': 'Aucun fichier fourni'}, status=400)
         
-        # Création d'un nom de fichier unique pour éviter les collisions
-        ext = file_obj.name.split('.')[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
+        # 1. Extraire l'extension et préparer un nom unique
+        ext = file_obj.name.split('.')[-1].lower()
+        # On définit le nom du fichier (Cloudinary créera les dossiers automatiquement)
+        filename = f"uploads/{request.user.id}/{uuid.uuid4()}.{ext}"
         
-        path = default_storage.save(
-            f"uploads/{request.user.id}/{filename}", 
-            ContentFile(file_obj.read())
-        )
+        # 2. Sauvegarder le fichier
+        # Si DEFAULT_FILE_STORAGE est configuré sur Cloudinary, 
+        # cette ligne envoie le fichier directement sur leurs serveurs.
+        path = default_storage.save(filename, ContentFile(file_obj.read()))
         
-        # Générer l'URL absolue
-        url = request.build_absolute_uri(settings.MEDIA_URL + path)
+        # 3. RÉCUPÉRATION DE L'URL (LA CORRECTION EST ICI)
+        # default_storage.url(path) détecte automatiquement si l'image est sur Cloudinary 
+        # et renvoie l'URL complète commençant par https://res.cloudinary.com/...
+        url = default_storage.url(path)
         
         return Response({
             'url': url, 
-            'type': 'IMAGE' if ext.lower() in ['jpg', 'jpeg', 'png', 'gif'] else 'VIDEO'
+            'type': 'IMAGE' if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else 'VIDEO'
         })
         
 class GlobalSearchView(APIView):
