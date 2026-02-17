@@ -294,19 +294,19 @@ class PageViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def subscribe(self, request, pk=None):
+    def subscribe(self, request, id=None):
         page = self.get_object()
         PageSubscription.objects.get_or_create(user=request.user, page=page)
         return Response({'status': 'subscribed'})
 
     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
-    def unsubscribe(self, request, pk=None):
+    def unsubscribe(self, request, id=None):
         page = self.get_object()
         PageSubscription.objects.filter(user=request.user, page=page).delete()
         return Response({'status': 'unsubscribed'})
 
     @action(detail=True, methods=['get'])
-    def posts(self, request, pk=None):
+    def posts(self, request, id=None):
         page = self.get_object()
         posts = Post.objects.filter(page=page)
         serializer = PostSerializer(posts, many=True, context={'request': request})
