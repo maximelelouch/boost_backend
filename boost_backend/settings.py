@@ -158,8 +158,8 @@ DJOSER = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Utilisation de WhiteNoise pour les statiques
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+# Remplacez votre ligne STATICFILES_STORAGE par celle-ci :
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 # Configuration Cloudinary pour les Médias (Photos)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -204,7 +204,7 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 WHITENOISE_MANIFEST_STRICT = False
