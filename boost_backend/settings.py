@@ -159,7 +159,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Utilisation de WhiteNoise pour les statiques
 # Remplacez votre ligne STATICFILES_STORAGE par celle-ci :
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 # Configuration Cloudinary pour les Médias (Photos)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -204,7 +204,8 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
 WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
