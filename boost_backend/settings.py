@@ -158,7 +158,7 @@ DJOSER = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Utilisation de WhiteNoise pour les statiques
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Configuration Cloudinary pour les Médias (Photos)
 CLOUDINARY_STORAGE = {
@@ -167,7 +167,8 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-
+# Force l'utilisation de Cloudinary pour tous les fichiers uploadés
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
