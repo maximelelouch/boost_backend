@@ -95,6 +95,17 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         mutual_users = User.objects.filter(id__in=mutual_ids)
         return Response(UserSerializer(mutual_users, many=True).data)
 
+    @action(detail=True, methods=['get'])
+    def posts(self, request, id=None):
+        user = self.get_object()
+        qs = (
+            Post.objects.filter(Q(author=user) | Q(page__owner=user))
+            .select_related('author', 'page')
+            .order_by('-created_at')
+        )
+        serializer = PostSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
+
 
 class FeedViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PostSerializer
@@ -192,6 +203,11 @@ class FeedViewSet(viewsets.ReadOnlyModelViewSet):
         for page_id, bonus in page_boost_bonus_map.items():
             boost_whens.append(When(page_id=page_id, then=Value(bonus)))
 
+        if boost_whens:
+                w_boost = Case(*boost_whens, default=Value(0), output_field=IntegerField())
+        else:
+            w_boost = Value(0)
+
         w_boost = Case(
             *boost_whens,
             default=Value(0),
@@ -244,19 +260,19 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def like(self, request, id=None):
+    def like(self, request, pk=None):
         post = self.get_object()
         Like.objects.get_or_create(user=request.user, post=post)
         return Response({'status': 'liked'})
 
     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
-    def unlike(self, request, id=None):
+    def unlike(self, request, pk=None):
         post = self.get_object()
         Like.objects.filter(user=request.user, post=post).delete()
         return Response({'status': 'unliked'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def share(self, request, id=None):
+    def share(self, request, pk=None):
         post = self.get_object()
         Share.objects.create(user=request.user, post=post)
         return Response({'status': 'shared'})
@@ -278,19 +294,19 @@ class PageViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def subscribe(self, request, id=None):
+    def subscribe(self, request, pk=None):
         page = self.get_object()
         PageSubscription.objects.get_or_create(user=request.user, page=page)
         return Response({'status': 'subscribed'})
 
     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
-    def unsubscribe(self, request, id=None):
+    def unsubscribe(self, request, pk=None):
         page = self.get_object()
         PageSubscription.objects.filter(user=request.user, page=page).delete()
         return Response({'status': 'unsubscribed'})
 
     @action(detail=True, methods=['get'])
-    def posts(self, request, id=None):
+    def posts(self, request, pk=None):
         page = self.get_object()
         posts = Post.objects.filter(page=page)
         serializer = PostSerializer(posts, many=True, context={'request': request})

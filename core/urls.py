@@ -16,3 +16,4 @@ urlpatterns = [
     path('', include(router.urls)),
     path('search/', GlobalSearchView.as_view(), name='global-search'),
 ]
+

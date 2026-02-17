@@ -104,6 +104,9 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Sérialiseur pour afficher les informations utilisateur"""
+    profile_picture_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    cover_photo_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = User
         fields = ['id', 'email', 'username', 'first_name', 'last_name', 'profile_picture_url','cover_photo_url', 'city', 'gender', 'birth_date', 'interests', 'date_joined']
