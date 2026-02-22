@@ -116,10 +116,11 @@ class UserSerializer(serializers.ModelSerializer):
 class UserCreateSerializer(serializers.ModelSerializer):
     """Sérialiseur pour créer un nouvel utilisateur"""
     password = serializers.CharField(write_only=True, min_length=8)
+    re_password = serializers.CharField(write_only=True, min_length=8)
     
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name', 'last_name']
+        fields = ['email', 'username', 'password', 're_password', 'first_name', 'last_name']
         
     def validate_email(self, value):
         """Valider que l'email est unique"""
@@ -127,10 +128,19 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Un compte avec cet email existe déjà.")
         return value
-    
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        re_password = attrs.get('re_password')
+        if password != re_password:
+            raise serializers.ValidationError({'re_password': "Les mots de passe ne correspondent pas."})
+        return attrs
+     
     def create(self, validated_data):
         """Créer un nouvel utilisateur avec mot de passe hashé"""
         validated_data['email'] = validated_data['email'].lower().strip()
+        validated_data.pop('re_password', None)
+
         user = User.objects.create_user(**validated_data)
         return user
 

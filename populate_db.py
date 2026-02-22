@@ -1,11 +1,19 @@
 import os
 import random
 import uuid
+import sys
+import time
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.core.files.uploadedfile import SimpleUploadedFile
+
+_START_TIME = time.time()
+
+def _log(msg: str) -> None:
+    elapsed = time.time() - _START_TIME
+    print(f"[{elapsed:7.1f}s] {msg}", file=sys.stdout, flush=True)
 
 # Configuration Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'boost_backend.settings')
@@ -95,6 +103,7 @@ def generate_agencies():
             company_name = f"{random.choice(COMPANY_NAMES)} {company_type} {region}"
             
         base_username = f"{company_name.lower().replace(' ', '_').replace('é','e').replace('è','e')}"
+    
         username = base_username
         final_username = username[:30]
         while final_username in used_usernames:
@@ -229,52 +238,52 @@ POST_CONTENTS = [
     {
         'content': 'Découvrez nos nouveaux bus électriques plus écologiques ! 🌱 #transportvert #mobilitédouce',
         'media_type': 'image',
-        'media_url': 'https://example.com/bus-electrique.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?electric+bus,africa'
     },
     {
         'content': 'Voyagez en toute sérénité avec nos services de transport de qualité. #voyage #transport',
         'media_type': 'video',
-        'media_url': 'https://example.com/voyage-bus.mp4'
+        'media_url': 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4'
     },
     {
         'content': 'Nouvelle ligne de métro ouverte ! Découvrez nos nouveaux itinéraires. #metro #transport',
         'media_type': 'image',
-        'media_url': 'https://example.com/nouvelle-ligne.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?bus+station,africa'
     },
     {
         'content': 'Nos équipes sont à votre service 24/7 pour vous assurer un transport en toute sécurité. #service #transport',
         'media_type': 'image',
-        'media_url': 'https://example.com/equipe-transport.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?bus+driver,africa'
     },
     {
         'content': 'Découvrez notre nouveau service de location de vélos électriques ! #velo #mobilitédouce',
         'media_type': 'video',
-        'media_url': 'https://example.com/velo-electrique.mp4'
+        'media_url': 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4'
     },
     {
         'content': 'Nos bus sont équipés de la climatisation pour votre confort. #confort #transport',
         'media_type': 'image',
-        'media_url': 'https://example.com/bus-climatise.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?coach+bus,africa'
     },
     {
         'content': 'Nouvelle application mobile disponible ! Gérez vos déplacements en un clic. #appli #mobilite',
         'media_type': 'image',
-        'media_url': 'https://example.com/appli-mobile.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?mobile+app,transport'
     },
     {
         'content': 'Nos chauffeurs sont formés pour assurer votre sécurité. #securite #transport',
         'media_type': 'video',
-        'media_url': 'https://example.com/chauffeur-formation.mp4'
+        'media_url': 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4'
     },
     {
         'content': 'Découvrez nos abonnements adaptés à vos besoins. #abonnement #transport',
         'media_type': 'image',
-        'media_url': 'https://example.com/abonnements.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?public+transport,ticket'
     },
     {
         'content': 'Nos véhicules sont régulièrement entretenus pour votre sécurité. #entretien #securite',
         'media_type': 'image',
-        'media_url': 'https://example.com/entretien-vehicule.jpg'
+        'media_url': 'https://source.unsplash.com/800x600/?bus+maintenance,garage'
     }
 ]
 
@@ -288,9 +297,9 @@ def create_users_and_pages():
     client_users = []
     pages = []
     
-    print("Création des utilisateurs agences...")
+    _log("Création des utilisateurs agences...")
     # Création des utilisateurs agences
-    for agency in agencies:
+    for idx, agency in enumerate(agencies, start=1):
         # Création de l'utilisateur agence
         user = User.objects.create_user(
             username=agency['username'],
@@ -324,10 +333,13 @@ def create_users_and_pages():
             category='Transport',
         )
         pages.append(page)
+
+        if idx % 5 == 0 or idx == len(agencies):
+            _log(f"Agences: {idx}/{len(agencies)} créées")
     
-    print("Création des utilisateurs clients...")
+    _log("Création des utilisateurs clients...")
     # Création des utilisateurs clients
-    for client in clients:
+    for idx, client in enumerate(clients, start=1):
         user = User.objects.create_user(
             username=client['username'],
             email=client['email'],
@@ -354,14 +366,18 @@ def create_users_and_pages():
         user.save()
         users.append(user)
         client_users.append(user)
+
+        if idx % 20 == 0 or idx == len(clients):
+            _log(f"Clients: {idx}/{len(clients)} créés")
     
     return users, agency_users, client_users, pages
 
 def create_posts(agency_users, client_users, pages):
     posts = []
+    _log(f"Création des posts (agences={len(agency_users)}, clients={len(client_users)})")
     
     # Créer des posts pour les agences (2-5 par agence)
-    for agency_user in agency_users:
+    for a_idx, agency_user in enumerate(agency_users, start=1):
         agency_pages = Page.objects.filter(owner=agency_user)
         if not agency_pages.exists():
             continue
@@ -379,9 +395,12 @@ def create_posts(agency_users, client_users, pages):
                 created_at=timezone.now() - timedelta(days=random.randint(0, 90))
             )
             posts.append(post)
+
+        if a_idx % 5 == 0 or a_idx == len(agency_users):
+            _log(f"Posts agences: {a_idx}/{len(agency_users)} auteurs traités (posts={len(posts)})")
     
     # Créer des posts pour les utilisateurs clients (0-3 par utilisateur)
-    for client_user in client_users:
+    for c_idx, client_user in enumerate(client_users, start=1):
         num_posts = random.choices([0, 1, 2, 3], weights=[0.3, 0.4, 0.2, 0.1])[0]
         
         for _ in range(num_posts):
@@ -420,18 +439,25 @@ def create_posts(agency_users, client_users, pages):
                     created_at=timezone.now() - timedelta(days=random.randint(0, 90))
                 )
             posts.append(post)
+
+        if c_idx % 20 == 0 or c_idx == len(client_users):
+            _log(f"Posts clients: {c_idx}/{len(client_users)} auteurs traités (posts={len(posts)})")
     
     return posts
 
 def create_likes_and_comments(users, posts):
     # Créer des likes
-    for post in posts:
+    _log(f"Création des likes & commentaires (users={len(users)}, posts={len(posts)})")
+    for p_idx, post in enumerate(posts, start=1):
         likers = random.sample(users, min(10, len(users)))
         for user in likers:
             Like.objects.get_or_create(user=user, post=post)
+
+        if p_idx % 25 == 0 or p_idx == len(posts):
+            _log(f"Likes: {p_idx}/{len(posts)} posts traités")
     
     # Créer des commentaires
-    for post in posts:
+    for p_idx, post in enumerate(posts, start=1):
         commenters = random.sample(users, min(5, len(users)))
         for user in commenters:
             Comment.objects.create(
@@ -452,9 +478,13 @@ def create_likes_and_comments(users, posts):
                 created_at=post.created_at + timedelta(minutes=random.randint(1, 1440))
             )
 
+        if p_idx % 25 == 0 or p_idx == len(posts):
+            _log(f"Commentaires: {p_idx}/{len(posts)} posts traités")
+
 def create_friendships(users):
     # Créer des relations d'amitié
-    for user in users:
+    _log(f"Création des relations d'amitié (users={len(users)})")
+    for u_idx, user in enumerate(users, start=1):
         # Déterminer le nombre d'amis (entre 5 et 20% des autres utilisateurs)
         num_friends = min(
             max(5, int(len(users) * random.uniform(0.05, 0.2))),  # Entre 5 et 20% des utilisateurs
@@ -490,6 +520,9 @@ def create_friendships(users):
                         status='ACCEPTED',
                         created_at=timezone.now() - timedelta(days=random.randint(1, 30))
                     )
+
+        if u_idx % 10 == 0 or u_idx == len(users):
+            _log(f"Amitiés: {u_idx}/{len(users)} utilisateurs traités")
 
 def create_boosts(users, posts, pages):
     # Créer des boosts pour certaines publications et pages
@@ -531,9 +564,9 @@ def create_boosts(users, posts, pages):
 
 def create_suggestions(users):
     """Créer des suggestions d'amis basées sur des intérêts communs et la localisation."""
-    print("Création des suggestions d'amis...")
+    _log("Création des suggestions d'amis...")
     
-    for user in users:
+    for u_idx, user in enumerate(users, start=1):
         # Pour chaque utilisateur, trouver des utilisateurs avec des intérêts similaires
         similar_users = []
         
@@ -561,40 +594,49 @@ def create_suggestions(users):
         
         # Stocker les suggestions dans le profil utilisateur (ou dans une table dédiée en production)
         # Ici, on se contente de les afficher
-        print(f"\nSuggestions pour {user.username}:")
-        for i, suggested in enumerate(suggested_users[:5], 1):  # Afficher les 5 premières suggestions
-            common = set(getattr(user, 'interests', [])) & set(getattr(suggested, 'interests', []))
-            print(f"  {i}. {suggested.username} (Ville: {suggested.city or 'Inconnue'}, Intérêts communs: {len(common)})")
+        if u_idx <= 3:
+            print(f"\nSuggestions pour {user.username}:")
+            for i, suggested in enumerate(suggested_users[:5], 1):
+                common = set(getattr(user, 'interests', [])) & set(getattr(suggested, 'interests', []))
+                print(f"  {i}. {suggested.username} (Ville: {suggested.city or 'Inconnue'}, Intérêts communs: {len(common)})")
+
+        if u_idx % 20 == 0 or u_idx == len(users):
+            _log(f"Suggestions: {u_idx}/{len(users)} utilisateurs traités")
 
 def main():
-    print("Début du peuplement de la base de données...")
+    _log("Début du peuplement de la base de données...")
     
     # Vider les tables existantes (attention, cette opération est destructrice)
-    print("Vidage des tables existantes...")
+    _log("Vidage des tables existantes...")
+    before_users = User.objects.exclude(is_superuser=True).count()
     User.objects.exclude(is_superuser=True).delete()
+    after_users = User.objects.exclude(is_superuser=True).count()
+    _log(f"Users supprimés (hors superuser): {before_users - after_users}")
     
     # Créer les utilisateurs et les pages
-    print("Création des utilisateurs et des pages...")
+    _log("Création des utilisateurs et des pages...")
     all_users, agency_users, client_users, pages = create_users_and_pages()
     
     # Créer des publications
-    print("Création des publications...")
+    _log("Création des publications...")
     posts = create_posts(agency_users, client_users, pages)
     
     # Ajouter des likes et des commentaires
-    print("Ajout des likes et commentaires...")
+    _log("Ajout des likes et commentaires...")
     create_likes_and_comments(all_users, posts)
     
     # Créer des relations d'amitié
-    print("Création des relations d'amitié et des invitations...")
+    _log("Création des relations d'amitié et des invitations...")
     create_friendships(all_users)
     
     # Créer des suggestions d'amis
     create_suggestions(client_users)
     
     # Créer des boosts (uniquement pour les agences)
-    print("Création des boosts...")
+    _log("Création des boosts...")
     create_boosts(agency_users, posts, pages)
+
+    _log("Calcul des statistiques...")
     
     # Statistiques
     print("\n" + "="*50)

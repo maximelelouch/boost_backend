@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
@@ -24,6 +25,17 @@ class FriendStatus(models.TextChoices):
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    username_validator = UnicodeUsernameValidator()
+
+    # Redéfini pour enlever l'unicité (obligatoire mais pas unique)
+    username = models.CharField(
+        'username',
+        max_length=150,
+        unique=False,
+        help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.',
+        validators=[username_validator],
+        error_messages={},
+    )
     email = models.EmailField(unique=True, blank=False, null=False)
     profile_picture_url = models.URLField(blank=True, null=True)
     cover_photo_url = models.URLField(blank=True, null=True)
